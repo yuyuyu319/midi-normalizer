@@ -15,7 +15,7 @@ HTML_PAGE = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MIDI Normalizer | ベロシティ平均化・コンプレッサー</title>
     <meta name="description" content="MIDIデータ全体のベロシティ平均値を算出し、音量のバラつきを音楽的に整えるツール。ミックスの土台を安定させ、プロフェッショナルなトラック制作を支援します。">
-    
+
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4758959657594096"
      crossorigin="anonymous"></script>
 
