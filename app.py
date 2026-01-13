@@ -53,7 +53,7 @@ HTML_PAGE = """
 <body>
     <div class="card">
         <h1>MIDI Normalizer</h1>
-        <p style="color: #94a3b8;">ピアノロール形式のリアルタイム・プレビュー</p>
+        <p style="color: #94a3b8;">音量のバラつきを抑え、狙ったダイナミクスへ。</p>
         
         <form action="/process" method="post" enctype="multipart/form-data">
             <div style="margin-bottom: 25px; border: 2px dashed #334155; padding: 20px; border-radius: 12px;">
