@@ -12,7 +12,7 @@ HTML_PAGE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MIDI Normalizer Pro | ベロシティ平均化・コンプレッサー</title>
+    <title>MIDI Normalizer | ベロシティ平均化・コンプレッサー</title>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4758959657594096" crossorigin="anonymous"></script>
     <style>
         :root { --accent: #00b0ff; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
