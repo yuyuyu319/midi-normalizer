@@ -6,87 +6,68 @@ from flask import Flask, request, send_file, make_response
 
 app = Flask(__name__)
 
-# --- デザイン & コンテンツ ---
+# --- デザイン & プレビューロジック ---
 HTML_PAGE = """
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MIDI Normalizer | ベロシティ平均化・コンプレッサー</title>
-    <meta name="description" content="MIDIデータ全体のベロシティ平均値を算出し、音量のバラつきを音楽的に整えるツール。全体の音量感を維持したまま、または指定したターゲット音量へ調整可能です。">
-    
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4758959657594096"
-     crossorigin="anonymous"></script>
-
+    <title>MIDI Normalizer | プレビュー機能付き</title>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4758959657594096" crossorigin="anonymous"></script>
     <style>
         :root { --accent: #00b0ff; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; text-align: center; padding: 50px 20px; margin:0; line-height: 1.6; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; text-align: center; padding: 50px 20px; margin:0; line-height: 1.6; }
         .card { background: var(--card); padding: 40px; border-radius: 24px; max-width: 650px; margin: auto; border: 1px solid #334155; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
         h1 { color: var(--accent); font-size: 2.5rem; margin-bottom: 10px; font-weight: 800; }
         .subtitle { color: #94a3b8; margin-bottom: 30px; font-size: 1.1rem; }
         .form-group { margin: 20px 0; text-align: left; max-width: 400px; margin-left: auto; margin-right: auto; }
         label { display: block; font-size: 0.9rem; color: #94a3b8; margin-bottom: 8px; font-weight: 600; }
-        input[type="number"], select { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 8px; font-size: 1rem; box-sizing: border-box; transition: 0.3s; }
-        input[type="number"]:focus { border-color: var(--accent); outline: none; }
+        input[type="number"], select { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
         button { background: var(--accent); color: white; border: none; padding: 18px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1.1rem; margin-top: 20px; transition: 0.2s; }
         button:hover { transform: translateY(-2px); opacity: 0.9; }
-        
-        .toggle-container { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
 
-        /* 相互リンク用スタイル：全5ツールのカラーを反映 */
+        /* プレビューエリアのスタイル */
+        #preview-container { margin-top: 30px; display: none; background: #0f172a; padding: 20px; border-radius: 12px; border: 1px solid #334155; }
+        .chart-label { font-size: 0.8rem; color: #94a3b8; margin-bottom: 10px; text-align: left; }
+        .bar-container { display: flex; align-items: flex-end; height: 100px; gap: 2px; border-bottom: 1px solid #334155; }
+        .bar { flex: 1; background: var(--accent); min-width: 1px; transition: height 0.3s; }
+        
         .link-box { margin-top: 25px; padding-top: 20px; border-top: 1px solid #334155; font-size: 0.8rem; color: #94a3b8; }
         .link-box a { text-decoration: none; font-weight: bold; margin: 0 4px; display: inline-block; }
-        .link-box a.humanizer { color: #00e676; } /* 緑 */
-        .link-box a.limiter { color: #ff9100; }    /* 橙 */
-        .link-box a.compressor { color: #d500f9; } /* 紫 */
-        .link-box a.expander { color: #ff5252; }   /* 赤 */
-
-        .content-section { max-width: 700px; margin: 60px auto; text-align: left; background: rgba(30, 41, 59, 0.5); padding: 40px; border-radius: 20px; border: 1px solid #1e293b; }
-        .content-section h2 { color: var(--accent); border-bottom: 2px solid #334155; padding-bottom: 10px; margin-top: 40px; }
-        
-        .policy-section { max-width: 600px; margin: 80px auto 0; text-align: left; padding: 30px; border-top: 1px solid #334155; color: #94a3b8; font-size: 0.85rem; }
-        .policy-section h2 { color: #f8fafc; font-size: 1.1rem; border-left: 4px solid var(--accent); padding-left: 10px; margin-bottom: 15px; }
-        .footer-copy { margin-top: 40px; font-size: 0.75rem; color: #475569; padding-bottom: 40px; }
+        .link-box a.humanizer { color: #00e676; }
+        .link-box a.limiter { color: #ff9100; }
+        .link-box a.compressor { color: #d500f9; }
+        .link-box a.expander { color: #ff5252; }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>MIDI Normalizer</h1>
-        <p class="subtitle">バラつきを抑え、狙った音量へ調整する。</p>
-        <form action="/process" method="post" enctype="multipart/form-data">
+        <p class="subtitle">ベロシティの変化をリアルタイムでプレビュー。</p>
+        <form id="midi-form" action="/process" method="post" enctype="multipart/form-data">
             <div style="margin-bottom: 25px; border: 2px dashed #334155; padding: 20px; border-radius: 12px;">
-                <input type="file" name="midi_file" accept=".mid,.midi" required style="color: #94a3b8;">
+                <input type="file" id="file-input" name="midi_file" accept=".mid,.midi" required style="color: #94a3b8;">
             </div>
             
             <div class="form-group">
-                <div class="toggle-container">
-                    <input type="checkbox" name="use_target" id="use_target" onchange="toggleTargetInput()" checked>
-                    <label style="margin-bottom:0; cursor:pointer;">目標ベロシティを指定する</label>
-                </div>
-                <div id="target_input_div">
-                    <input type="number" name="target_v" value="80" min="1" max="127">
-                </div>
+                <input type="checkbox" name="use_target" id="use_target" checked>
+                <label style="display:inline; cursor:pointer;">目標ベロシティを指定</label>
+                <input type="number" name="target_v" id="target_v" value="80" min="1" max="127">
             </div>
 
             <div class="form-group">
-                <label>バラつきの圧縮率 (0-100%)<br><small>※100%で完全に均一になります</small></label>
-                <input type="number" name="norm_rate" value="50" min="0" max="100">
+                <label>バラつきの圧縮率 (%)</label>
+                <input type="number" name="norm_rate" id="norm_rate" value="50" min="0" max="100">
             </div>
 
-            <button type="submit">NORMALIZE & DOWNLOAD</button>
-        </form>
+            <div id="preview-container">
+                <div class="chart-label">ベロシティ分布（プレビュー）</div>
+                <div class="bar-container" id="chart"></div>
+            </div>
 
-        <script>
-            function toggleTargetInput() {
-                const checked = document.getElementById('use_target').checked;
-                const div = document.getElementById('target_input_div');
-                div.style.visibility = checked ? 'visible' : 'hidden';
-                div.style.height = checked ? 'auto' : '0';
-                div.style.marginTop = checked ? '10px' : '0';
-            }
-        </script>
+            <button type="submit">PROCESS & DOWNLOAD</button>
+        </form>
 
         <div class="link-box">
             関連ツール: 
@@ -97,68 +78,92 @@ HTML_PAGE = """
         </div>
     </div>
 
-    <div class="content-section">
-        <h2>独自の二段階処理</h2>
-        <p>
-            本ツールはまず全体の平均値を算出し、指定した圧縮率で各ノートを平均に近づけます。その後、指定された目標値がある場合は、平均値との差分を全ノートに適用します。これにより、音楽的なニュアンスを破壊することなく、確実な音量コントロールが可能です。
-        </p>
-    </div>
+    <script>
+        // JSによる簡易MIDI解析とシミュレーション
+        const fileInput = document.getElementById('file-input');
+        const normRateInput = document.getElementById('norm_rate');
+        const targetVInput = document.getElementById('target_v');
+        const useTargetInput = document.getElementById('use_target');
+        const chart = document.getElementById('chart');
+        const previewContainer = document.getElementById('preview-container');
 
-    <div class="policy-section">
-        <h2>プライバシーポリシー</h2>
-        <p><strong>データ処理：</strong>アップロードされたMIDIファイルはサーバーに保存されず、メモリ内で即座に処理・返送されます。プライバシーは完全に守られます。</p>
-        <p><strong>広告配信：</strong>当サイトではGoogle AdSense等の第三者配信事業者がCookieを利用して広告を配信する場合があります。</p>
-    </div>
+        let originalVelocities = [];
 
-    <div class="footer-copy">&copy; 2026 MIDI Normalizer. All rights reserved.</div>
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const buffer = await file.arrayBuffer();
+            const view = new DataView(buffer);
+            originalVelocities = [];
+
+            // 簡易的なMIDIパース（Note Onのベロシティを抽出）
+            for (let i = 0; i < view.byteLength - 2; i++) {
+                const byte = view.getUint8(i);
+                if ((byte & 0xF0) === 0x90) { // Note On
+                    const vel = view.getUint8(i + 2);
+                    if (vel > 0) originalVelocities.push(vel);
+                }
+            }
+            updatePreview();
+        });
+
+        [normRateInput, targetVInput, useTargetInput].forEach(el => {
+            el.addEventListener('input', updatePreview);
+        });
+
+        function updatePreview() {
+            if (originalVelocities.length === 0) return;
+            previewContainer.style.display = 'block';
+            
+            const rate = normRateInput.value / 100;
+            const target = parseInt(targetVInput.value);
+            const useTarget = useTargetInput.checked;
+            const avg = originalVelocities.reduce((a, b) => a + b, 0) / originalVelocities.length;
+
+            const buckets = new Array(32).fill(0); // 128段階を32個の棒グラフに
+            
+            originalVelocities.forEach(v => {
+                let newV = v + (avg - v) * rate;
+                if (useTarget) newV += (target - avg);
+                newV = Math.max(1, Math.min(127, newV));
+                buckets[Math.floor(newV / 4)]++;
+            });
+
+            const maxCount = Math.max(...buckets);
+            chart.innerHTML = buckets.map(count => {
+                const height = maxCount ? (count / maxCount) * 100 : 0;
+                return `<div class="bar" style="height: ${height}%"></div>`;
+            }).join('');
+        }
+    </script>
 </body>
 </html>
 """
 
-# --- MIDI処理ロジック ---
 def process_normalizer(midi_file_stream, norm_rate, use_target, target_v):
     midi_file_stream.seek(0)
     input_data = io.BytesIO(midi_file_stream.read())
     try:
         mid = mido.MidiFile(file=input_data)
     except: return None
-
-    # 1. 元データの平均値を算出
     vels = [m.velocity for t in mid.tracks for m in t if m.type == 'note_on' and m.velocity > 0]
-    if not vels:
-        return None
+    if not vels: return None
     avg_v = sum(vels) / len(vels)
-
     for track in mid.tracks:
         for msg in track:
             if msg.type == 'note_on' and msg.velocity > 0:
-                # 第一段階：平均値へ寄せる（バラつきの圧縮）
                 compressed_v = msg.velocity + (avg_v - msg.velocity) * (norm_rate / 100.0)
-                
-                # 第二段階：目標値へのシフト（指定がある場合のみ）
-                if use_target:
-                    shift = target_v - avg_v
-                    final_v = compressed_v + shift
-                else:
-                    final_v = compressed_v
-                
+                final_v = compressed_v + (target_v - avg_v) if use_target else compressed_v
                 msg.velocity = max(1, min(127, int(final_v)))
+    output = io.BytesIO(); mid.save(file=output); output.seek(0); return output
 
-    output = io.BytesIO()
-    mid.save(file=output)
-    output.seek(0)
-    return output
-
-# --- ルーティング ---
 @app.route('/')
-def index():
-    response = make_response(HTML_PAGE)
-    response.headers['Content-Type'] = 'text/html; charset=utf-8'
-    return response
+def index(): return make_response(HTML_PAGE)
 
 @app.route('/process', methods=['POST'])
 def process():
-    file = request.files['midi_file']
+    file = request.files.get('midi_file')
     norm_rate = int(request.form.get('norm_rate', 50))
     use_target = request.form.get('use_target') == 'on'
     target_v = int(request.form.get('target_v', 80))
