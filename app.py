@@ -59,7 +59,7 @@ HTML_PAGE = """
             <button type="submit">NORMALIZE & DOWNLOAD</button>
         </form>
         <div class="link-box">
-            リズムを揺らしたいですか？ <br>
+            ヒューマナイズはこちら <br>
             <a href="https://midi-humanizer.onrender.com/">→ MIDI Humanizer を使う</a>
         </div>
     </div>
