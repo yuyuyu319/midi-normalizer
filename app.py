@@ -22,7 +22,7 @@ HTML_PAGE = """
     <style>
         :root { --accent: #00b0ff; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
         body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; text-align: center; padding: 50px 20px; margin:0; line-height: 1.6; }
-        .card { background: var(--card); padding: 40px; border-radius: 24px; max-width: 600px; margin: auto; border: 1px solid #334155; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
+        .card { background: var(--card); padding: 40px; border-radius: 24px; max-width: 650px; margin: auto; border: 1px solid #334155; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
         h1 { color: var(--accent); font-size: 2.5rem; margin-bottom: 10px; font-weight: 800; }
         .subtitle { color: #94a3b8; margin-bottom: 30px; font-size: 1.1rem; }
         .form-group { margin: 20px 0; text-align: left; max-width: 400px; margin-left: auto; margin-right: auto; }
@@ -35,10 +35,13 @@ HTML_PAGE = """
         .toggle-container { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
 
-        .link-box { margin-top: 25px; padding-top: 20px; border-top: 1px solid #334155; font-size: 0.85rem; color: #94a3b8; }
-        .link-box a { text-decoration: none; font-weight: bold; }
-        .link-box a.humanizer { color: #00e676; }
-        .link-box a.limiter { color: #ff9100; }
+        /* 相互リンク用スタイル：全5ツールのカラーを反映 */
+        .link-box { margin-top: 25px; padding-top: 20px; border-top: 1px solid #334155; font-size: 0.8rem; color: #94a3b8; }
+        .link-box a { text-decoration: none; font-weight: bold; margin: 0 4px; display: inline-block; }
+        .link-box a.humanizer { color: #00e676; } /* 緑 */
+        .link-box a.limiter { color: #ff9100; }    /* 橙 */
+        .link-box a.compressor { color: #d500f9; } /* 紫 */
+        .link-box a.expander { color: #ff5252; }   /* 赤 */
 
         .content-section { max-width: 700px; margin: 60px auto; text-align: left; background: rgba(30, 41, 59, 0.5); padding: 40px; border-radius: 20px; border: 1px solid #1e293b; }
         .content-section h2 { color: var(--accent); border-bottom: 2px solid #334155; padding-bottom: 10px; margin-top: 40px; }
@@ -86,18 +89,15 @@ HTML_PAGE = """
         </script>
 
         <div class="link-box">
-            他のツールを使う:<br>
-            <a href="https://midi-humanizer.onrender.com/" class="humanizer">MIDI Humanizer</a> | 
-            <a href="https://midi-limiter.onrender.com/" class="limiter">MIDI Limiter</a>
+            関連ツール: 
+            <a href="https://midi-humanizer.onrender.com/" class="humanizer">Humanizer</a> | 
+            <a href="https://midi-limiter.onrender.com/" class="limiter">Limiter</a> | 
+            <a href="https://midi-compressor.onrender.com/" class="compressor">Compressor</a> | 
+            <a href="https://midi-expander.onrender.com/" class="expander">Expander</a>
         </div>
     </div>
 
     <div class="content-section">
-        <h2>選べる2つのモード</h2>
-        <p>
-            <strong>1. 平均維持モード：</strong> 「目標ベロシティを指定する」をオフにすると、曲全体の平均的な強さを変えずに、バラつきだけを抑えます。<br>
-            <strong>2. ターゲット調整モード：</strong> 特定の音量（ターゲット）を指定すると、バラつきを抑えた上で、全体の音量をその値まで一律にシフトさせます。
-        </p>
         <h2>独自の二段階処理</h2>
         <p>
             本ツールはまず全体の平均値を算出し、指定した圧縮率で各ノートを平均に近づけます。その後、指定された目標値がある場合は、平均値との差分を全ノートに適用します。これにより、音楽的なニュアンスを破壊することなく、確実な音量コントロールが可能です。
