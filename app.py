@@ -37,7 +37,7 @@ HTML_PAGE = """
         .link-box { margin-top: 25px; padding-top: 20px; border-top: 1px solid #334155; font-size: 0.8rem; color: #94a3b8; }
         .link-box a { text-decoration: none; font-weight: bold; margin: 0 4px; display: inline-block; }
         .link-box a.humanizer { color: #00e676; } .link-box a.normalizer { color: #00b0ff; }
-        .link-box a.limiter { color: #ff9100; } .link-box a.expander { color: #ff5252; }
+        .link-box a.limiter { color: #ff9100; } .link-box a.compressor { color: #d500f9; } .link-box a.expander { color: #ff5252; }
 
         .content-section { max-width: 850px; margin: 60px auto; text-align: left; background: rgba(30, 41, 59, 0.5); padding: 40px; border-radius: 20px; border: 1px solid #1e293b; }
         .content-section h2 { color: var(--accent); border-bottom: 2px solid #334155; padding-bottom: 10px; margin-top: 40px; }
